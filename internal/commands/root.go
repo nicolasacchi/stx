@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -23,6 +24,7 @@ var (
 	verboseFlag   bool
 	limitFlag     int
 	timeoutFlag   string
+	yesFlag       bool
 )
 
 var rootCmd = &cobra.Command{
@@ -53,8 +55,39 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verboseFlag, "verbose", "v", false, "Log HTTP requests to stderr")
 	rootCmd.PersistentFlags().IntVar(&limitFlag, "limit", 0, "Cap result count (0 = API default)")
 	rootCmd.PersistentFlags().StringVar(&timeoutFlag, "timeout", "30s", "HTTP timeout (e.g. 60s, 2m)")
+	rootCmd.PersistentFlags().BoolVar(&yesFlag, "yes", false, "Skip confirmation prompt for destructive commands")
 
-	rootCmd.AddCommand(containersCmd, configCmd, analyticsCmd, monitoringCmd)
+	rootCmd.AddCommand(containersCmd, configCmd, analyticsCmd, monitoringCmd, domainsCmd, powerUpsCmd)
+}
+
+// confirmDestructive prints a confirmation prompt and returns nil iff --yes was set.
+// Used by delete/transfer/update commands.
+func confirmDestructive(method, path string) error {
+	if yesFlag {
+		return nil
+	}
+	fmt.Fprintf(os.Stderr, "about to %s %s\nre-run with --yes to confirm\n", method, path)
+	return fmt.Errorf("confirmation required")
+}
+
+// readBodyFile reads a JSON file from disk and returns the raw bytes.
+// Validates by attempting to parse as JSON; rejects empty files.
+func readBodyFile(path string) ([]byte, error) {
+	if path == "" {
+		return nil, fmt.Errorf("--from-file path required")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	if len(data) == 0 {
+		return nil, fmt.Errorf("%s: empty file", path)
+	}
+	var probe any
+	if err := json.Unmarshal(data, &probe); err != nil {
+		return nil, fmt.Errorf("%s: invalid JSON: %w", path, err)
+	}
+	return data, nil
 }
 
 // getClient resolves credentials and constructs the HTTP client.
