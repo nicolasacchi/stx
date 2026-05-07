@@ -21,6 +21,37 @@ var analyticsCmd = &cobra.Command{
 	Short: "Container analytics (subscription usage by client / browser)",
 }
 
+var analyticsEnableOff bool
+
+var analyticsEnableCmd = &cobra.Command{
+	Use:   "enable <container>",
+	Short: "Enable (or disable with --off) the analytics module",
+	Long: `PATCH the analytics module on. Required to populate
+'analytics browsers' / 'analytics clients' data.
+
+Pass --off to disable. Requires --yes (DESTRUCTIVE).`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, creds, err := getClient()
+		if err != nil {
+			return err
+		}
+		id, err := resolveContainer(args, creds)
+		if err != nil {
+			return err
+		}
+		enabled := !analyticsEnableOff
+		if err := confirmDestructive("PATCH", "/api/v2/containers/"+id+"/analytics-enable"); err != nil {
+			return err
+		}
+		data, err := c.EnableAnalytics(ctx(), id, enabled)
+		if err != nil {
+			return err
+		}
+		return output.PrintData("analytics.enable", data, jsonFlag, jqFlag)
+	},
+}
+
 var analyticsInfoCmd = &cobra.Command{
 	Use:   "info <container>",
 	Short: "Get analytics info for a container",
@@ -123,5 +154,6 @@ func init() {
 		c.Flags().StringVar(&analyticsToFlag, "to", "", "end time (default: now when --from set)")
 		c.Flags().StringVar(&analyticsSinceFlag, "since", "", "shorthand: start=now-<dur>, end=now (e.g. 7d)")
 	}
-	analyticsCmd.AddCommand(analyticsInfoCmd, analyticsBrowsersCmd, analyticsClientsCmd)
+	analyticsEnableCmd.Flags().BoolVar(&analyticsEnableOff, "off", false, "Disable analytics instead of enabling")
+	analyticsCmd.AddCommand(analyticsInfoCmd, analyticsBrowsersCmd, analyticsClientsCmd, analyticsEnableCmd)
 }
