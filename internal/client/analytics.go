@@ -39,3 +39,9 @@ func (c *Client) GetAnalyticsBrowsers(ctx context.Context, container string, q A
 func (c *Client) GetAnalyticsClients(ctx context.Context, container string, q AnalyticsQuery) ([]byte, error) {
 	return c.Get(ctx, "/api/v2/containers/"+url.PathEscape(container)+"/analytics/clients", q.values())
 }
+
+// EnableAnalytics — PATCH /api/v2/containers/{id}/analytics-enable.
+// Body: ContainerAnalyticsFormType {enabled: bool} (required).
+func (c *Client) EnableAnalytics(ctx context.Context, container string, enabled bool) ([]byte, error) {
+	return c.Patch(ctx, "/api/v2/containers/"+url.PathEscape(container)+"/analytics-enable", map[string]bool{"enabled": enabled})
+}

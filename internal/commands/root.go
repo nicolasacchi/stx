@@ -57,7 +57,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&timeoutFlag, "timeout", "30s", "HTTP timeout (e.g. 60s, 2m)")
 	rootCmd.PersistentFlags().BoolVar(&yesFlag, "yes", false, "Skip confirmation prompt for destructive commands")
 
-	rootCmd.AddCommand(containersCmd, configCmd, analyticsCmd, monitoringCmd, domainsCmd, powerUpsCmd)
+	rootCmd.AddCommand(
+		containersCmd, configCmd, analyticsCmd, monitoringCmd, domainsCmd, powerUpsCmd,
+		customLoaderCmd, proxyFilesCmd, schedulesCmd,
+	)
 }
 
 // confirmDestructive prints a confirmation prompt and returns nil iff --yes was set.

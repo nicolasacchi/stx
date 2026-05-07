@@ -2,7 +2,7 @@
 
 Read-and-write CLI for the [Stape API](https://api.app.eu.stape.io/api/doc). Go, single binary, JSON output, gjson `--jq` filters, multi-region (EU / global), multi-project (`~/.config/stx/config.toml`), multi-workspace (`X-WORKSPACE` header).
 
-**Status (v0.4)**: M1 + M2 complete — read-only paths (`containers list/get`, `analytics info/browsers/clients`, `monitoring logs aggregated/detailed/trace`, `domains list/get`, `power-ups get`) + cleanup tooling (`containers create/update/delete/transfer`, `domains delete`). Destructive commands gated by `--yes`. Table renderer for `monitoring logs detailed` (replaces manual log.csv panel download). Full 83-endpoint coverage in progress.
+**Status (v0.5)**: M1–M3 complete — full read coverage (containers, analytics, monitoring logs, domains, power-ups, proxy-files, schedules) + write paths (containers CRUD, domains CRUD/validate/revalidate, custom-loader generate, analytics enable, proxy-files update, schedules update). Destructive commands gated by `--yes`. Table renderer for `monitoring logs detailed` (replaces manual log.csv panel download). 31 of 83 endpoints shipped — M4 (power-ups CRUD + monitoring rules) and M5 (users/api-keys/partner-checker/resources) pending.
 
 ## Install
 
@@ -113,7 +113,30 @@ stx containers list --jq '#.{id:identifier,name:name}'   # project per element
 ### `domains`
 - `stx domains list <container>` — list domains
 - `stx domains get <container> <domain-uuid>` — note: takes the domain's UUID identifier (from `domains list .identifier`), NOT the hostname
+- `stx domains create <container> --name --cdn-type [stape|custom|none] [--connection-type] [--use-cname-record|--use-a-record] --yes`
+- `stx domains update <container> <domain-uuid> --name --cdn-type ... --yes` — full PUT replace
+- `stx domains validate <container> --name --cdn-type ...` — proposes config without persisting; safe to run
+- `stx domains revalidate <container> <domain-uuid>` — re-checks DNS/cert; idempotent
 - `stx domains delete <container> <domain-uuid> --yes`
+
+### `custom-loader`
+Singular path (`/api/v2/container/...` — note no `s`).
+- `stx custom-loader generate <container> --web-gtm-id GTM-XXXX --domain <host> --source other [--data-layer-object dataLayer] [--user-identifier-type cookie] [--user-identifier-value name] [--same-origin-path /path]`
+- `--from-file <path>` accepts a full JSON body. The spec marks all fields optional but the API rejects without `webGtmId/domain/source`.
+
+### `analytics`
+- `stx analytics info <container>`
+- `stx analytics browsers <container> --since 7d` (requires module enabled)
+- `stx analytics clients <container> --since 7d` (requires module enabled)
+- `stx analytics enable <container> [--off] --yes` — toggle the module on/off
+
+### `proxy-files`
+- `stx proxy-files list <container>`
+- `stx proxy-files update <container> --from-file <json> --yes` — full PUT replace; body shape in the long help
+
+### `schedules`
+- `stx schedules list <container>`
+- `stx schedules update <container> --from-file <json> --yes` — full PUT replace; body shape in the long help
 
 ### `analytics`
 Subscription usage breakdowns. Requires the analytics module enabled on the container (HTTP 409 if disabled).
@@ -153,7 +176,8 @@ Outgoing request logs — replaces the manual `log.csv` panel download.
 
 - [x] M1: `containers list/get`, `config` group, `analytics info/browsers/clients`, `monitoring logs aggregated/detailed/trace`, `--timeout` flag, table output for `monitoring logs detailed`
 - [x] M2: `containers create/update/delete/transfer`, `domains list/get/delete`, `power-ups get`, `--yes` confirmation gate, `--from-file` body loader
-- [ ] M3: `custom-loader generate`, `domains create/update/validate/revalidate`, `analytics enable`, `proxy-files list/update`, `schedules list/update`
+- [x] M3: `custom-loader generate`, `domains create/update/validate/revalidate`, `analytics enable`, `proxy-files list/update`, `schedules list/update`
+- [ ] M4: 20 typed power-ups PATCH subcommands (Tier A toggle / Tier B `--options-file`), monitoring rules + emails CRUD
 - [ ] M3: write paths (custom-loader, domains create/validate/revalidate, schedules, proxy-files, analytics enable)
 - [ ] M4: 20 typed power-ups subcommands, monitoring rules + emails CRUD
 - [ ] M5: users (incl. CSV exception), api-keys, partner-checker, resources
