@@ -2,7 +2,7 @@
 
 Read-and-write CLI for the [Stape API](https://api.app.eu.stape.io/api/doc). Go, single binary, JSON output, gjson `--jq` filters, multi-region (EU / global), multi-project (`~/.config/stx/config.toml`), multi-workspace (`X-WORKSPACE` header).
 
-**Status (v0.1)**: vertical slice — `containers list`, `containers get`, `config {add,list,use,remove,current,doctor}`. Full 83-endpoint coverage in progress.
+**Status (v0.3)**: M1 complete — `containers list/get`, `analytics info/browsers/clients`, `monitoring logs aggregated/detailed/trace`, `config {add,list,use,remove,current,doctor}`, table renderer for `monitoring logs detailed` (replaces manual log.csv panel download). Full 83-endpoint coverage in progress.
 
 ## Install
 
@@ -31,8 +31,16 @@ stx config doctor
 
 # 4. Use it
 stx containers list
-stx containers list --jq '#.identifier'        # all container IDs
-stx containers get <id>
+stx containers list --jq 'body.items.#.identifier'   # all container IDs
+
+# Replaces manual log.csv panel download — last 5 minutes of outgoing traffic
+stx monitoring logs detailed <container> --since 5m
+
+# Filter by GTM event
+stx monitoring logs detailed <container> --since 1h --event-type Purchase
+
+# Trace one request end-to-end
+stx monitoring logs trace <container> --trace-id <uuid>
 ```
 
 ## Authentication
@@ -73,6 +81,7 @@ region    = "eu"
 | `--json` | (auto) | Force JSON output (default on pipe) |
 | `--jq <expr>` | none | gjson filter (NOT real jq) |
 | `--limit <n>` | API default | Cap result count |
+| `--timeout <dur>` | `30s` | HTTP timeout (e.g. `60s`, `2m`) |
 | `--verbose / -v` | off | Log HTTP requests to stderr |
 
 ## Output
@@ -96,13 +105,25 @@ stx containers list --jq '#.{id:identifier,name:name}'   # project per element
 - `stx containers list` — list all containers in the workspace
 - `stx containers get <id>` — single container
 
+### `analytics`
+Subscription usage breakdowns. Requires the analytics module enabled on the container (HTTP 409 if disabled).
+- `stx analytics info <id>` — current analytics state
+- `stx analytics browsers <id> [--since 7d | --from --to]` — browser breakdown
+- `stx analytics clients <id> [--since 7d | --from --to]` — client breakdown
+
+### `monitoring logs`
+Outgoing request logs — replaces the manual `log.csv` panel download.
+- `stx monitoring logs aggregated <id> [--since 1h | --from --to] [--platform] [--event-type]`
+- `stx monitoring logs detailed <id> [--since 5m | --from --to] [--platform] [--event-type]` — TTY renders a table; pipe emits JSON
+- `stx monitoring logs trace <id> --trace-id <uuid> [--date now]` — single trace by ID (date defaults to now)
+
 ### `config`
 - `stx config add <name> --api-key ... [--region eu|global] [--workspace UUID] [--default-container ID]`
 - `stx config list` — show configured projects (`*` = default)
 - `stx config use <name>` — set default project
 - `stx config remove <name>`
 - `stx config current` — show resolved credentials (key redacted)
-- `stx config doctor` — verify auth + region + workspace by calling `GET /api/v2/users`
+- `stx config doctor` — verify auth + region + workspace by calling `GET /api/v2/containers`
 
 ## Exit Codes
 
@@ -115,8 +136,7 @@ stx containers list --jq '#.{id:identifier,name:name}'   # project per element
 
 ## Roadmap
 
-- [x] M1 vertical: `containers list/get`, full `config` group
-- [ ] M1 rest: `analytics`, `monitoring logs`, `--timeout` flag, table output
+- [x] M1: `containers list/get`, `config` group, `analytics info/browsers/clients`, `monitoring logs aggregated/detailed/trace`, `--timeout` flag, table output for `monitoring logs detailed`
 - [ ] M2: `containers create/update/delete`, `domains list/get/delete`, `power-ups get`, `containers transfer`
 - [ ] M3: write paths (custom-loader, domains create/validate/revalidate, schedules, proxy-files, analytics enable)
 - [ ] M4: 20 typed power-ups subcommands, monitoring rules + emails CRUD

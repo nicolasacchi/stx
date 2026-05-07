@@ -33,13 +33,17 @@ type Client struct {
 
 // New constructs a Client for the given region.
 // region must be "eu" (default) or "global". workspace may be empty.
-func New(apiKey, region, workspace string, verbose bool) *Client {
+// timeout=0 falls back to DefaultTimeout.
+func New(apiKey, region, workspace string, verbose bool, timeout time.Duration) *Client {
 	base := "https://api.app.eu.stape.io"
 	if region == "global" {
 		base = "https://api.app.stape.io"
 	}
+	if timeout == 0 {
+		timeout = DefaultTimeout
+	}
 	return &Client{
-		http:      &http.Client{Timeout: DefaultTimeout},
+		http:      &http.Client{Timeout: timeout},
 		apiKey:    apiKey,
 		workspace: workspace,
 		baseURL:   base,

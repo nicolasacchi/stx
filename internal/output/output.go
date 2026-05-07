@@ -9,6 +9,7 @@ package output
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,13 +17,24 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// PrintData writes data to stdout as JSON, optionally filtered with gjson.
+// PrintData writes data to stdout. Behaviour:
+//   - TTY + command has a column map + !jsonMode + no jqFilter → table render
+//   - otherwise → JSON (with optional gjson --jq filter)
 //
-// command is a dotted lookup key reserved for future table rendering
-// (e.g. "containers.list"); for v0 we always emit JSON.
+// The command key is "<group>.<leaf>" (e.g. "containers.list").
 func PrintData(command string, data []byte, jsonMode bool, jqFilter string) error {
-	_ = command   // reserved
-	_ = jsonMode  // reserved (will gate table render later)
+	useTable := !jsonMode && jqFilter == "" && IsTTY()
+	if useTable {
+		err := printTable(command, data)
+		if err == nil {
+			return nil
+		}
+		if !errors.Is(err, errNoTable) {
+			// Real rendering error — surface it
+			return err
+		}
+		// errNoTable: fall through to JSON
+	}
 
 	if jqFilter != "" {
 		filtered, err := ApplyFilter(data, jqFilter)

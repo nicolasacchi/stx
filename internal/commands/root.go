@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -21,6 +22,7 @@ var (
 	jqFlag        string
 	verboseFlag   bool
 	limitFlag     int
+	timeoutFlag   string
 )
 
 var rootCmd = &cobra.Command{
@@ -50,8 +52,9 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&jqFlag, "jq", "", "gjson filter expression (NOT real jq)")
 	rootCmd.PersistentFlags().BoolVarP(&verboseFlag, "verbose", "v", false, "Log HTTP requests to stderr")
 	rootCmd.PersistentFlags().IntVar(&limitFlag, "limit", 0, "Cap result count (0 = API default)")
+	rootCmd.PersistentFlags().StringVar(&timeoutFlag, "timeout", "30s", "HTTP timeout (e.g. 60s, 2m)")
 
-	rootCmd.AddCommand(containersCmd, configCmd)
+	rootCmd.AddCommand(containersCmd, configCmd, analyticsCmd, monitoringCmd)
 }
 
 // getClient resolves credentials and constructs the HTTP client.
@@ -63,7 +66,11 @@ func getClient() (*client.Client, *config.Credentials, error) {
 	if verboseFlag {
 		client.SetVerboseDest(os.Stderr)
 	}
-	c := client.New(creds.APIKey, creds.Region, creds.Workspace, verboseFlag)
+	timeout, err := time.ParseDuration(timeoutFlag)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid --timeout %q: %w", timeoutFlag, err)
+	}
+	c := client.New(creds.APIKey, creds.Region, creds.Workspace, verboseFlag, timeout)
 	return c, creds, nil
 }
 
