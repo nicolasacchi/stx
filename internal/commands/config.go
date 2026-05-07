@@ -166,7 +166,7 @@ var configCurrentCmd = &cobra.Command{
 
 var configDoctorCmd = &cobra.Command{
 	Use:   "doctor",
-	Short: "Verify credentials by calling GET /api/v2/users",
+	Short: "Verify credentials by calling GET /api/v2/containers",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, creds, err := getClient()
@@ -174,22 +174,26 @@ var configDoctorCmd = &cobra.Command{
 			return err
 		}
 		fmt.Fprintf(os.Stderr, "→ %s (region=%s, workspace=%s)\n", c.BaseURL(), creds.Region, emptyOrValue(creds.Workspace, "none"))
-		data, err := c.ListUsers(ctx())
+		data, err := c.ListContainers(ctx(), 1)
 		if err != nil {
 			fmt.Println("status: FAIL")
 			return err
 		}
+		// Stape wraps responses in {"body": {...}, "error": {"code": 200, ...}}
 		var probe struct {
-			Items []struct {
-				Email    string `json:"email"`
-				Username string `json:"username"`
-			} `json:"items"`
+			Body struct {
+				Total int `json:"total"`
+				Items []struct {
+					Identifier string `json:"identifier"`
+					Name       string `json:"name"`
+				} `json:"items"`
+			} `json:"body"`
 		}
 		_ = json.Unmarshal(data, &probe)
 		fmt.Println("status: ok")
-		fmt.Printf("response: %d bytes\n", len(data))
-		if len(probe.Items) > 0 {
-			fmt.Printf("first user: %s / %s\n", probe.Items[0].Email, probe.Items[0].Username)
+		fmt.Printf("containers visible: %d\n", probe.Body.Total)
+		if len(probe.Body.Items) > 0 {
+			fmt.Printf("first: %s (%s)\n", probe.Body.Items[0].Identifier, probe.Body.Items[0].Name)
 		}
 		return nil
 	},
