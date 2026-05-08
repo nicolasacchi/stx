@@ -2,7 +2,7 @@
 
 Read-and-write CLI for the [Stape API](https://api.app.eu.stape.io/api/doc). Go, single binary, JSON output, gjson `--jq` filters, multi-region (EU / global), multi-project (`~/.config/stx/config.toml`), multi-workspace (`X-WORKSPACE` header).
 
-**Status (v0.5)**: M1–M3 complete — full read coverage (containers, analytics, monitoring logs, domains, power-ups, proxy-files, schedules) + write paths (containers CRUD, domains CRUD/validate/revalidate, custom-loader generate, analytics enable, proxy-files update, schedules update). Destructive commands gated by `--yes`. Table renderer for `monitoring logs detailed` (replaces manual log.csv panel download). 31 of 83 endpoints shipped — M4 (power-ups CRUD + monitoring rules) and M5 (users/api-keys/partner-checker/resources) pending.
+**Status (v0.6)**: M1–M4 complete — **62 of 83 endpoints**. Adds 20 typed power-up PATCH subcommands (Tier A toggle / Tier B with `--options-file`), monitoring rules CRUD (7), monitoring emails CRUD (4). Only M5 (users/api-keys/partner-checker/resources, 26 endpoints) and M6 (synthetic `overview` + polish) remain.
 
 ## Install
 
@@ -145,15 +145,44 @@ Subscription usage breakdowns. Requires the analytics module enabled on the cont
 - `stx analytics clients <id> [--since 7d | --from --to]` — client breakdown
 
 ### `power-ups`
-Read-only this slice. The 20 typed PATCH subcommands (toggle / configure) land in M4.
-- `stx power-ups get <container> <type>` — type names match the spec (kebab-case): `ad-blocker`, `anonymizer`, `cookie-keeper`, `custom-loader`, `dedicated-ip`, `enricher`, …. CLI alias: `header-config` → `preview-header-config`.
-  - Note: returns 404 for power-ups that have no individual configuration record, even when the container's summary `powerUps.<name>` boolean is `true`. Use `containers get <id> --jq 'body.powerUps'` for the boolean summary.
+Read + 20 typed PATCH subcommands. Two tiers:
+- **Tier A (8 — toggle only)**: `ad-blocker`, `bot-index`, `custom-loader`, `geo-headers`, `request-delay`, `user-agent-headers`, `user-id`, `xml-to-json`. Body: `{"isActive": bool}`.
+- **Tier B (12 — toggle + JSON config)**: `anonymizer`, `block-request-by-ip`, `bot-detection`, `click-id-restorer`, `cookie-keeper`, `dedicated-ip`, `enricher`, `preview-header-config` (alias: `header-config`), `product-feed`, `proxy-files`, `schedule`, `service-account`. Body: `{"isActive": bool, "options": <type-specific>}`. Some types have `options` required when enabling — CLI errors before sending.
+
+```bash
+stx power-ups get <container> <type>                                       # read state (404 if no individual config record)
+stx power-ups ad-blocker <container> --on --yes                            # Tier A
+stx power-ups anonymizer <container> --on --options-file ./anon.json --yes # Tier B w/ required options
+stx power-ups click-id-restorer <container> --on --yes                     # Tier B w/ optional options (file omitted)
+stx power-ups service-account <container> --on --options-file ./creds.json --yes  # special: file sent as raw string blob
+```
+
+Notes:
+- `power-ups get <type>` returns 404 for types that have no individual configuration record, even when `containers get .powerUps.<name>` is `true`. Use the container summary for boolean state.
+- `service-account` is the one Tier B special: `--options-file` contents are sent as a raw string (Google service-account credentials JSON blob), not parsed as JSON.
 
 ### `monitoring logs`
 Outgoing request logs — replaces the manual `log.csv` panel download.
 - `stx monitoring logs aggregated <id> [--since 1h | --from --to] [--platform] [--event-type]`
 - `stx monitoring logs detailed <id> [--since 5m | --from --to] [--platform] [--event-type]` — TTY renders a table; pipe emits JSON
 - `stx monitoring logs trace <id> --trace-id <uuid> [--date now]` — single trace by ID (date defaults to now)
+
+### `monitoring rules`
+Alert thresholds on log volume / events.
+- `stx monitoring rules list <container>`
+- `stx monitoring rules get <container> <rule-id>`
+- `stx monitoring rules create <container> --from-file <json> --yes` — body is `ContainerMonitoringFormType` (complex; see `--help`)
+- `stx monitoring rules update <container> <rule-id> --from-file <json> --yes` — full PUT replace
+- `stx monitoring rules delete <container> <rule-id> --yes`
+- `stx monitoring rules switch <container> <rule-id> --on|--off --yes`
+- `stx monitoring rules resolve <container> <rule-id> --yes` — mark a fired rule as handled
+
+### `monitoring emails`
+Alert recipient management.
+- `stx monitoring emails list <container>`
+- `stx monitoring emails add <container> --email <addr> --yes`
+- `stx monitoring emails delete <container> --email <addr> --yes`
+- `stx monitoring emails switch <container> --email <addr> --on|--off --yes`
 
 ### `config`
 - `stx config add <name> --api-key ... [--region eu|global] [--workspace UUID] [--default-container ID]`
@@ -177,7 +206,9 @@ Outgoing request logs — replaces the manual `log.csv` panel download.
 - [x] M1: `containers list/get`, `config` group, `analytics info/browsers/clients`, `monitoring logs aggregated/detailed/trace`, `--timeout` flag, table output for `monitoring logs detailed`
 - [x] M2: `containers create/update/delete/transfer`, `domains list/get/delete`, `power-ups get`, `--yes` confirmation gate, `--from-file` body loader
 - [x] M3: `custom-loader generate`, `domains create/update/validate/revalidate`, `analytics enable`, `proxy-files list/update`, `schedules list/update`
-- [ ] M4: 20 typed power-ups PATCH subcommands (Tier A toggle / Tier B `--options-file`), monitoring rules + emails CRUD
+- [x] M4: 20 typed power-ups PATCH subcommands (Tier A toggle / Tier B `--options-file`), monitoring rules + emails CRUD
+- [ ] M5: `users` (incl. CSV exception), `api-keys`, `partner-checker`, `resources` enum dispatcher
+- [ ] M6: `stx overview` parallel-fetch dashboard, polish, goreleaser
 - [ ] M3: write paths (custom-loader, domains create/validate/revalidate, schedules, proxy-files, analytics enable)
 - [ ] M4: 20 typed power-ups subcommands, monitoring rules + emails CRUD
 - [ ] M5: users (incl. CSV exception), api-keys, partner-checker, resources
