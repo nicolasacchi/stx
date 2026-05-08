@@ -60,6 +60,7 @@ func init() {
 	rootCmd.AddCommand(
 		containersCmd, configCmd, analyticsCmd, monitoringCmd, domainsCmd, powerUpsCmd,
 		customLoaderCmd, proxyFilesCmd, schedulesCmd,
+		usersCmd, apiKeysCmd, partnerCheckerCmd, resourcesCmd,
 	)
 }
 

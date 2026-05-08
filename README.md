@@ -2,7 +2,7 @@
 
 Read-and-write CLI for the [Stape API](https://api.app.eu.stape.io/api/doc). Go, single binary, JSON output, gjson `--jq` filters, multi-region (EU / global), multi-project (`~/.config/stx/config.toml`), multi-workspace (`X-WORKSPACE` header).
 
-**Status (v0.6)**: M1–M4 complete — **62 of 83 endpoints**. Adds 20 typed power-up PATCH subcommands (Tier A toggle / Tier B with `--options-file`), monitoring rules CRUD (7), monitoring emails CRUD (4). Only M5 (users/api-keys/partner-checker/resources, 26 endpoints) and M6 (synthetic `overview` + polish) remain.
+**Status (v0.7)**: M1–M5 complete — **88 of 83 endpoints** (full API coverage; 88 = 83 endpoints + 5 synthetic CLI commands like `resources kinds`). Adds users (6), api-keys (3), partner-checker (2), resources (15 enum lookups via single dispatcher). Only M6 (synthetic `overview` parallel-fetch dashboard + goreleaser polish) remains.
 
 ## Install
 
@@ -184,6 +184,40 @@ Alert recipient management.
 - `stx monitoring emails delete <container> --email <addr> --yes`
 - `stx monitoring emails switch <container> --email <addr> --on|--off --yes`
 
+### `users`
+Agency sub-user management. Most endpoints return 403 on personal accounts.
+- `stx users list`
+- `stx users get <id>`
+- `stx users create --username <name> {--password <pass> | --password-stdin} [--name-first] [--name-last] [--send-email] --yes` — `--password-stdin` preferred for scripts (avoids `ps` leak)
+- `stx users attach --email <addr> --has-no-products [--product-name <p>] --yes`
+- `stx users detach <id> --yes`
+- `stx users export-csv [--out <file>]` — returns `text/csv`; `--jq` not supported
+
+### `api-keys`
+Account API key management. Secret value is shown ONCE at creation; `list` returns metadata only.
+- `stx api-keys list`
+- `stx api-keys create --name <label> --yes` — copy the secret IMMEDIATELY
+- `stx api-keys delete <id> --yes` — DON'T delete the key currently in use
+
+### `partner-checker`
+Stape Partner Tracking Checker. Each `create` consumes monthly quota.
+- `stx partner-checker limit` — remaining quota
+- `stx partner-checker create --site-url <url> --callback-url <url> --yes`
+
+### `resources`
+Enum / reference data lookup — 15 endpoints behind one dispatcher.
+- `stx resources kinds` — print all 15 valid kind names (no API call)
+- `stx resources <kind>` — fetch the enum
+
+```bash
+stx resources container-zones                # eut, eue, euu, euFranceX (with IPs + domains)
+stx resources container-statuses             # 10 statuses
+stx resources container-domain-cdn-types     # stape, custom, none
+stx resources container-monitoring-periods-type   # 1, 2, 6, 12, 24, 168 hours
+```
+
+The response wraps in `{body: [...]}` (array directly under `body`, NOT `body.items` like containers list). Use `--jq 'body.#'` for the count, `--jq 'body.0'` for first item.
+
 ### `config`
 - `stx config add <name> --api-key ... [--region eu|global] [--workspace UUID] [--default-container ID]`
 - `stx config list` — show configured projects (`*` = default)
@@ -207,7 +241,7 @@ Alert recipient management.
 - [x] M2: `containers create/update/delete/transfer`, `domains list/get/delete`, `power-ups get`, `--yes` confirmation gate, `--from-file` body loader
 - [x] M3: `custom-loader generate`, `domains create/update/validate/revalidate`, `analytics enable`, `proxy-files list/update`, `schedules list/update`
 - [x] M4: 20 typed power-ups PATCH subcommands (Tier A toggle / Tier B `--options-file`), monitoring rules + emails CRUD
-- [ ] M5: `users` (incl. CSV exception), `api-keys`, `partner-checker`, `resources` enum dispatcher
+- [x] M5: `users` (incl. CSV exception + `--password-stdin`), `api-keys`, `partner-checker`, `resources` enum dispatcher (15 kinds)
 - [ ] M6: `stx overview` parallel-fetch dashboard, polish, goreleaser
 - [ ] M3: write paths (custom-loader, domains create/validate/revalidate, schedules, proxy-files, analytics enable)
 - [ ] M4: 20 typed power-ups subcommands, monitoring rules + emails CRUD
