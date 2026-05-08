@@ -2,7 +2,7 @@
 
 Read-and-write CLI for the [Stape API](https://api.app.eu.stape.io/api/doc). Go, single binary, JSON output, gjson `--jq` filters, multi-region (EU / global), multi-project (`~/.config/stx/config.toml`), multi-workspace (`X-WORKSPACE` header).
 
-**Status (v0.7)**: M1–M5 complete — **88 of 83 endpoints** (full API coverage; 88 = 83 endpoints + 5 synthetic CLI commands like `resources kinds`). Adds users (6), api-keys (3), partner-checker (2), resources (15 enum lookups via single dispatcher). Only M6 (synthetic `overview` parallel-fetch dashboard + goreleaser polish) remains.
+**Status (v1.0)**: complete. Full Stape API v2.0.0 coverage (83 endpoints + synthetic helpers) + parallel-fetch `overview` dashboard + tagged binary releases via goreleaser. M6 closes the brief.
 
 ## Install
 
@@ -33,6 +33,9 @@ stx config doctor
 stx containers list
 stx containers list --jq 'body.items.#.identifier'   # all container IDs
 
+# Multi-section dashboard — 5 parallel fetches, ~500ms total
+stx overview <container>
+
 # Replaces manual log.csv panel download — last 5 minutes of outgoing traffic
 stx monitoring logs detailed <container> --since 5m
 
@@ -41,6 +44,9 @@ stx monitoring logs detailed <container> --since 1h --event-type Purchase
 
 # Trace one request end-to-end
 stx monitoring logs trace <container> --trace-id <uuid>
+
+# Regenerate the production custom-loader JS snippet
+stx custom-loader generate <container> --web-gtm-id GTM-XXXX --domain <host> --source other
 ```
 
 ## Authentication
@@ -204,6 +210,11 @@ Stape Partner Tracking Checker. Each `create` consumes monthly quota.
 - `stx partner-checker limit` — remaining quota
 - `stx partner-checker create --site-url <url> --callback-url <url> --yes`
 
+### `overview`
+Parallel-fetch dashboard for a container.
+- `stx overview <container>` — TTY: multi-section summary (container details, custom-loader state, domains, monitoring, recent traffic, analytics state). Pipe / `--json`: combined JSON `{container, domains, rules, emails, logs_1h}` for downstream tooling.
+- 5 HTTP calls in parallel via `sync.WaitGroup`; ~500ms total against `api.app.eu.stape.io`. Per-section errors degrade gracefully (`(error: …)`) instead of failing the whole command.
+
 ### `resources`
 Enum / reference data lookup — 15 endpoints behind one dispatcher.
 - `stx resources kinds` — print all 15 valid kind names (no API call)
@@ -242,7 +253,7 @@ The response wraps in `{body: [...]}` (array directly under `body`, NOT `body.it
 - [x] M3: `custom-loader generate`, `domains create/update/validate/revalidate`, `analytics enable`, `proxy-files list/update`, `schedules list/update`
 - [x] M4: 20 typed power-ups PATCH subcommands (Tier A toggle / Tier B `--options-file`), monitoring rules + emails CRUD
 - [x] M5: `users` (incl. CSV exception + `--password-stdin`), `api-keys`, `partner-checker`, `resources` enum dispatcher (15 kinds)
-- [ ] M6: `stx overview` parallel-fetch dashboard, polish, goreleaser
+- [x] M6: `stx overview` parallel-fetch dashboard, `make refresh-spec` Swagger UI scraper, `goreleaser` config + GitHub release workflow on tag push
 - [ ] M3: write paths (custom-loader, domains create/validate/revalidate, schedules, proxy-files, analytics enable)
 - [ ] M4: 20 typed power-ups subcommands, monitoring rules + emails CRUD
 - [ ] M5: users (incl. CSV exception), api-keys, partner-checker, resources

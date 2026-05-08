@@ -1,7 +1,7 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS := -s -w -X main.version=$(VERSION)
 
-.PHONY: build install test lint clean tidy
+.PHONY: build install test lint clean tidy refresh-spec release-dryrun
 
 build:
 	go build -ldflags "$(LDFLAGS)" -o bin/stx ./cmd/stx
@@ -17,6 +17,12 @@ lint:
 
 tidy:
 	go mod tidy
+
+refresh-spec:
+	go run ./internal/openapi/refresh.go
+
+release-dryrun:
+	goreleaser release --snapshot --clean
 
 clean:
 	rm -rf bin/ dist/
