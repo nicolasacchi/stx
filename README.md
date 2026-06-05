@@ -244,7 +244,11 @@ The response wraps in `{body: [...]}` (array directly under `body`, NOT `body.it
 | 0 | success |
 | 1 | generic error |
 | 2 | unauthorized (401/403) — wrong key, wrong region, wrong workspace |
+| 3 | validation (400) |
 | 4 | not found (404) |
+| 5 | rate limited (429) |
+
+Fleet-canonical table (`clicore/cierrors.ExitCodeFor`).
 
 ## Roadmap
 

@@ -34,11 +34,11 @@ func TestAPIError_Error(t *testing.T) {
 func TestAPIError_ExitCode(t *testing.T) {
 	cases := map[int]int{
 		200: 1, // unexpected (not used in practice)
-		400: 1,
+		400: 3,
 		401: 2,
 		403: 2,
 		404: 4,
-		429: 1,
+		429: 5,
 		500: 1,
 		502: 1,
 		503: 1,
