@@ -8,13 +8,14 @@
 // JSON blob with shape {spec: {...}}.
 //
 // Usage:
-//   go run ./internal/openapi/refresh.go
+//
+//	go run ./internal/openapi/refresh.go
 //
 // Manual fallback if the scrape ever breaks:
-//   1. Open https://api.app.eu.stape.io/api/doc in a browser
-//   2. View source, find <script id="swagger-data">{...}</script>
-//   3. Extract the .spec sub-object and write it (pretty-printed) to
-//      internal/openapi/spec.json by hand
+//  1. Open https://api.app.eu.stape.io/api/doc in a browser
+//  2. View source, find <script id="swagger-data">{...}</script>
+//  3. Extract the .spec sub-object and write it (pretty-printed) to
+//     internal/openapi/spec.json by hand
 package main
 
 import (

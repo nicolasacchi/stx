@@ -58,9 +58,9 @@ CLI alias: header-config -> preview-header-config.`,
 // optionsRequired=true makes that file mandatory when --on is used.
 func registerPowerUpToggle(parent *cobra.Command, name string, hasOptions, optionsRequired bool, aliases ...string) {
 	var (
-		on             bool
-		off            bool
-		optionsFile    string
+		on          bool
+		off         bool
+		optionsFile string
 	)
 	short := "Toggle power-up: " + name
 	if hasOptions {
@@ -172,9 +172,9 @@ func init() {
 
 	// Tier B — toggle + options (12)
 	type tierB struct {
-		name             string
-		optionsRequired  bool
-		aliases          []string
+		name            string
+		optionsRequired bool
+		aliases         []string
 	}
 	for _, t := range []tierB{
 		{"anonymizer", true, nil},
