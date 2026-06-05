@@ -16,6 +16,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/nicolasacchi/clicore/httpclient"
 )
 
 const (
@@ -126,7 +128,10 @@ func (c *Client) Do(ctx context.Context, method, path string, query url.Values, 
 		resp, err := c.http.Do(req)
 		if err != nil {
 			lastErr = err
-			if !shouldRetryNetwork(err) {
+			// clicore's canonical policy: never retry a permanent error or a
+			// non-idempotent verb (POST/PATCH) on a network failure — the write
+			// may already have committed. Fixes SEC-1 + the permanent-error case.
+			if !httpclient.ShouldRetryNetwork(method, err) {
 				return nil, err
 			}
 			continue
@@ -177,11 +182,6 @@ func backoffDelay(lastErr error, attempt int) time.Duration {
 
 func shouldRetryStatus(code int) bool {
 	return code == 429 || (code >= 500 && code < 600)
-}
-
-func shouldRetryNetwork(err error) bool {
-	// Network/connection errors are retryable
-	return err != nil
 }
 
 func parseRetryAfter(s string) time.Duration {
