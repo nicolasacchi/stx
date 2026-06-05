@@ -7,9 +7,9 @@ import (
 
 func TestAPIError_Error(t *testing.T) {
 	cases := []struct {
-		name  string
-		err   *APIError
-		want  string
+		name string
+		err  *APIError
+		want string
 	}{
 		{
 			"with body",

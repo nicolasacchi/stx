@@ -11,8 +11,9 @@ import (
 // in the path (everything else is plural `containers`).
 //
 // Body satisfies ContainerCustomLoaderDTO. All fields optional in the spec:
-//   webGtmId, domain, source (enum), dataLayerObjectName,
-//   userIdentifierType (enum), userIdentifierValue, sameOriginPath
+//
+//	webGtmId, domain, source (enum), dataLayerObjectName,
+//	userIdentifierType (enum), userIdentifierValue, sameOriginPath
 func (c *Client) GenerateCustomLoader(ctx context.Context, container string, body any) ([]byte, error) {
 	return c.Post(ctx, "/api/v2/container/"+url.PathEscape(container)+"/custom-loader", body)
 }

@@ -40,7 +40,7 @@ Use --json to get a single combined JSON object instead of the dashboard.`,
 
 		var (
 			container, domains, rules, emails, logs fetchResult
-			wg                                       sync.WaitGroup
+			wg                                      sync.WaitGroup
 		)
 		wg.Add(5)
 		go func() {

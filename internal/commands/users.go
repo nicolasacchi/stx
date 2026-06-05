@@ -145,8 +145,8 @@ var usersAttachCmd = &cobra.Command{
 			return err
 		}
 		body := map[string]any{
-			"email":          usersAttachEmail,
-			"hasNoProducts":  usersAttachHasNoProducts,
+			"email":         usersAttachEmail,
+			"hasNoProducts": usersAttachHasNoProducts,
 		}
 		if usersAttachProductName != "" {
 			body["productName"] = usersAttachProductName
