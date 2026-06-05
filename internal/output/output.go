@@ -14,6 +14,7 @@ import (
 	"io"
 	"os"
 
+	cliout "github.com/nicolasacchi/clicore/output"
 	"github.com/tidwall/gjson"
 )
 
@@ -23,6 +24,11 @@ import (
 //
 // The command key is "<group>.<leaf>" (e.g. "containers.list").
 func PrintData(command string, data []byte, jsonMode bool, jqFilter string) error {
+	// Agent-mode row cap: under CLAUDECODE an unbounded JSON-array result caps to
+	// AgentRowCap (shape preserved, stderr-noted). stx's --limit is server-side
+	// (0 = API default), so this is the client-side safety net for agents.
+	data = cliout.CapAgentArray(data, 0)
+
 	useTable := !jsonMode && jqFilter == "" && IsTTY()
 	if useTable {
 		err := printTable(command, data)
