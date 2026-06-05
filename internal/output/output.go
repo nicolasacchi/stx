@@ -48,9 +48,10 @@ func PrintData(command string, data []byte, jsonMode bool, jqFilter string) erro
 
 // ApplyFilter runs a gjson expression against data.
 // gjson syntax — NOT real jq. Examples:
-//   "0.identifier"          first element's identifier
-//   "#.identifier"          all identifiers (array)
-//   "#.{id:identifier,name:name}"   project per element
+//
+//	"0.identifier"          first element's identifier
+//	"#.identifier"          all identifiers (array)
+//	"#.{id:identifier,name:name}"   project per element
 func ApplyFilter(data []byte, expr string) ([]byte, error) {
 	res := gjson.GetBytes(data, expr)
 	if !res.Exists() {
@@ -93,7 +94,7 @@ func isTTY(w io.Writer) bool {
 type bytes struct{ buf []byte }
 
 func (b *bytes) Write(p []byte) (int, error) { b.buf = append(b.buf, p...); return len(p), nil }
-func (b *bytes) String() string               { return string(b.buf) }
+func (b *bytes) String() string              { return string(b.buf) }
 
 func jsonIndent(dst *bytes, src []byte) error {
 	var v any

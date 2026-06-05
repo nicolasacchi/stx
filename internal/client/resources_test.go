@@ -13,12 +13,12 @@ func TestResourceKinds_HasAll15(t *testing.T) {
 
 func TestIsValidResourceKind(t *testing.T) {
 	cases := map[string]bool{
-		"container-zones":              true,
-		"container-statuses":           true,
-		"container-domain-cdn-types":   true,
-		"NOT-A-KIND":                   false,
-		"":                             false,
-		"container-zones-typo":         false,
+		"container-zones":            true,
+		"container-statuses":         true,
+		"container-domain-cdn-types": true,
+		"NOT-A-KIND":                 false,
+		"":                           false,
+		"container-zones-typo":       false,
 	}
 	for kind, want := range cases {
 		if got := IsValidResourceKind(kind); got != want {

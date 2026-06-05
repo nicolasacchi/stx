@@ -226,4 +226,3 @@ func TestSetVerboseDest(t *testing.T) {
 	// Just exercise the setter to bump coverage; behaviour is observable elsewhere.
 	SetVerboseDest(io.Discard)
 }
-

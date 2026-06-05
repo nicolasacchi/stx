@@ -11,7 +11,7 @@ func TestFormatEpochSeconds(t *testing.T) {
 		in   any
 		want string // partial match ok
 	}{
-		{"int64", int64(1700000000), "2023"},   // Tue Nov 14 2023 22:13:20 UTC
+		{"int64", int64(1700000000), "2023"}, // Tue Nov 14 2023 22:13:20 UTC
 		{"int", 1700000000, "2023"},
 		{"float64", float64(1700000000), "2023"},
 		{"string-numeric", "1700000000", "2023"},
@@ -37,8 +37,8 @@ func TestFormatURLPath(t *testing.T) {
 		in, want string
 	}{
 		{"https://x.com/api/v2/foo?a=1", "/api/v2/foo"},
-		{"https://x.com", "https://x.com"},      // no path -> return original
-		{"plain-string", "plain-string"},          // no scheme/host -> return original
+		{"https://x.com", "https://x.com"}, // no path -> return original
+		{"plain-string", "plain-string"},   // no scheme/host -> return original
 		{"", ""},
 	}
 	for _, tc := range cases {
