@@ -2,13 +2,12 @@
 
 Read-and-write CLI for the [Stape API](https://api.app.eu.stape.io/api/doc). Go, single binary, JSON output, gjson `--jq` filters, multi-region (EU / global), multi-project (`~/.config/stx/config.toml`), multi-workspace (`X-WORKSPACE` header).
 
-**Status (v1.0)**: complete. Full Stape API v2.0.0 coverage (83 endpoints + synthetic helpers) + parallel-fetch `overview` dashboard + tagged binary releases via goreleaser. M6 closes the brief.
+**Status (v1.1)**: complete. Full Stape API v2.0.0 coverage (83 endpoints + synthetic helpers) + parallel-fetch `overview` dashboard + tagged binary releases via goreleaser. M6 closes the brief.
 
 ## Install
 
 ```bash
-export GOPRIVATE=github.com/nicolasacchi/*
-go install github.com/nicolasacchi/stx/cmd/stx@latest
+go install github.com/nicolasacchi/stx/cmd/stx@latest   # public repo, Go 1.27+
 ```
 
 Or build from source:
